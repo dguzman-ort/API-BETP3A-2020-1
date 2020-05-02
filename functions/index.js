@@ -1,11 +1,11 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
 const app = express();
 app.use(cors({ origin: true }));
 
-// Path to your file permissions provided by Firebase (need to get the credentials in configuration)
 var serviceAccount = require("./permissions.json");
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -21,10 +21,13 @@ app.get('/hello-world', (req, res) => {
 // create
 app.post('/api/create', (req, res) => {
     (async () => {
+        const data = req.body;
+        // Validacion ID | Siempre autogenerado.
+        data.id = uuidv4()
         try {
-            await db.collection('items').doc('/' + req.body.id + '/')
-                .create(req.body);
-            return res.status(200).send();
+            await db.collection('items').doc('/' + data.id + '/')
+                .create(data);
+            return res.status(200).send(data);
         } catch (error) {
             console.log(error);
             return res.status(500).send(error);
@@ -79,6 +82,7 @@ app.put('/api/update/:item_id', (req, res) => {
     (async () => {
         try {
             const document = db.collection('items').doc(req.params.item_id);
+            delete req.body.id
             await document.update(req.body);
             return res.status(200).send();
         } catch (error) {
